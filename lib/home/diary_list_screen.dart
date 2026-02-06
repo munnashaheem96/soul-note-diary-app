@@ -12,6 +12,7 @@ class DiaryListScreen extends StatefulWidget {
 
 class _DiaryListScreenState extends State<DiaryListScreen> {
   late DateTime currentMonth;
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -59,11 +60,34 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            /// 🔍 Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value.trim().toLowerCase();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: "Search diaries...",
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+
             /// 🗓 Month Header
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 20,
-                vertical: 16,
+                vertical: 8,
               ),
               child: Row(
                 children: [
@@ -71,7 +95,6 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                     icon: const Icon(Icons.chevron_left),
                     onPressed: _goToPreviousMonth,
                   ),
-
                   Expanded(
                     child: Center(
                       child: Text(
@@ -83,7 +106,6 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                       ),
                     ),
                   ),
-
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
                     onPressed: _goToNextMonth,
@@ -96,7 +118,6 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  // Firestore auto-refreshes, but UX matters
                   await Future.delayed(const Duration(milliseconds: 300));
                 },
                 child: SingleChildScrollView(
@@ -104,6 +125,7 @@ class _DiaryListScreenState extends State<DiaryListScreen> {
                   child: DiaryList(
                     year: currentMonth.year,
                     month: currentMonth.month,
+                    searchQuery: searchQuery, // 🔥 PASS QUERY
                   ),
                 ),
               ),

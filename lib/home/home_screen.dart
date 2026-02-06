@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: DiaryList(
               year: selectedYear,
-              month: activeMonthIndex + 1,
+              month: activeMonthIndex + 1, searchQuery: '',
             ),
           ),
         ],

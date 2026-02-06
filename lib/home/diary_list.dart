@@ -1,18 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:diary_app/home/view_diary_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
+import 'view_diary_screen.dart';
 
 class DiaryList extends StatelessWidget {
   final int year;
   final int month;
+  final String searchQuery;
 
-  const DiaryList({super.key, required this.year, required this.month});
+  const DiaryList({
+    super.key,
+    required this.year,
+    required this.month,
+    required this.searchQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirestoreService.getDiaries(year: year, month: month),
+      stream: FirestoreService.getDiaries(
+        year: year,
+        month: month,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -33,18 +42,39 @@ class DiaryList extends StatelessWidget {
           );
         }
 
+        // 🔍 LOCAL SEARCH FILTER
+        final filteredDocs = snapshot.data!.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final title = (data['title'] ?? '').toString().toLowerCase();
+          final content = (data['content'] ?? '').toString().toLowerCase();
+
+          return title.contains(searchQuery) ||
+              content.contains(searchQuery);
+        }).toList();
+
+        if (filteredDocs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.only(top: 40),
+            child: Center(
+              child: Text(
+                "No matching diaries",
+                style: TextStyle(color: Colors.black54),
+              ),
+            ),
+          );
+        }
+
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: filteredDocs.length,
           itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index];
+            final doc = filteredDocs[index];
             final data = doc.data() as Map<String, dynamic>;
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
+              child: GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
@@ -76,21 +106,22 @@ class DiaryList extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.book, color: Color(0xFF5B8FF9)),
+                      const Icon(Icons.book,
+                          color: Color(0xFF5B8FF9)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              data['title'] ?? '',
+                              data['title'],
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              data['content'] ?? '',
+                              data['content'],
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
